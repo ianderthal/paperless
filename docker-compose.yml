@@ -1,0 +1,34 @@
+services:
+  broker:
+    image: redis:7.4.11
+    container_name: paperless-redis
+    restart: unless-stopped
+    volumes:
+      - /opt/docker/paperless/redis:/data
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.3.0
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - broker
+    environment:
+      - PAPERLESS_REDIS=redis://broker:6379
+      - PAPERLESS_URL=${PAPERLESS_URL}
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
+      - PAPERLESS_ADMIN_USER=${PAPERLESS_ADMIN_USER}
+      - PAPERLESS_ADMIN_PASSWORD=${PAPERLESS_ADMIN_PASSWORD}
+      - PAPERLESS_TIME_ZONE=America/Los_Angeles
+      - PAPERLESS_OCR_LANGUAGE=eng
+    volumes:
+      - /opt/docker/paperless/data:/usr/src/paperless/data
+      - /opt/docker/paperless/media:/usr/src/paperless/media
+      - /opt/docker/paperless/export:/usr/src/paperless/export
+      - /opt/docker/paperless/consume:/usr/src/paperless/consume
+    networks:
+      - default
+      - proxy_network
+
+networks:
+  proxy_network:
+    external: true
